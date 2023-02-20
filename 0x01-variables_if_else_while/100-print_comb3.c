@@ -9,23 +9,18 @@ int main(void)
 	int n;
 	int m;
 
-	n = 48;
-
-	while (n < 57)
+	for (n = 0; n < 10; n++)
 	{
-	m = 48;
-	while (m < 58)
-	{
-		putchar(n);
-		putchar(m);
-		m++;
-
-		putchar(44);
-		putchar(32);
+		for (m = n + 1; m < 10; m++)
+		{
+			putchar(n + '0');
+			putchar(m + '0');
+			if (n != 8 || m != 9)
+			{
+				putchar(',');
+				putchar(' ');
+			}
+		}
 	}
-	n++;
-	}
-	putchar('\n');
-
 	return (0);
-	}
+}
