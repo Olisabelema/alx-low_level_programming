@@ -1,4 +1,5 @@
 #include "main.h"
+#include <limits.h>
 /**
 * print_last_digit - prints the last digit of an interger.
 * @num:number to compute last digit.
@@ -8,7 +9,11 @@ int print_last_digit(int num)
 {
 	int last_digit;
 
-	if (num > 0)
+	if (num == INT_MIN)
+	{
+	last_digit = 8;
+	}
+	else if (num > 0)
 	{
 	last_digit = num % 10;
 	}
