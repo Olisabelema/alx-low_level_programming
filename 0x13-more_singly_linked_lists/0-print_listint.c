@@ -8,14 +8,14 @@
  */
 size_t print_listint(const listint_t *h)
 {
-	const listint_t *temp = h;
+	const listint_t *c = h;
 	int i = 0;
 
-	while (temp != NULL)
+	while (c != NULL)
 	{
-		printf("%d\n", temp->n);
+		printf("%d\n", c->n);
 		i++;
-		temp = temp->next;
+		c = c->next;
 	}
 
 	return (i);
