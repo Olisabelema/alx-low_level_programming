@@ -2,96 +2,101 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-char *create_buffer(char *filename);
-void close_file(int file_descriptor);
-/**
-* create_buffer - allocates 1024 bytes of memory for a buffer.
-* @filename: The name of the file that the buffer will store characters into.
-* Return: This points to the newly-allocated buffer.
-*/
-char *create_buffer(char *filename)
-{
-	char *buffer;
-
-	buffer = malloc(sizeof(char) * 1024);
-
-	if (buffer == NULL)
-	{
-		dprintf(STDERR_FILENO,
-			"Error: Can't write to %s\n", filename);
-		exit(99);
-	}
-
-	return (buffer);
-}
+void write_error_check(int written_bytes,
+	char *arguments[], int file_descriptor_from);
+void read_error_check(int read_bytes, char *arguments[]);
+void close_error_check(int file_descriptor);
 
 /**
- * close_file - closes a file.
- * @file_descriptor: The file descriptor of the file to be closed.
+ * main - entry point
+ * @argument_count: counts argument.
+ * @arguments: this is the command line arguments.
+ *
+ * Return: int
 */
-void close_file(int file_descriptor)
+int main(int argument_count, char **arguments)
 {
-	int result;
+	int file_descriptor_to = 0, file_descriptor_from = 0,
+	written_bytes = 0, read_bytes = 0;
+	char buffer[1024];
 
-	result = close(file_descriptor);
-
-	if (result == -1)
+	if (argument_count != 3)
 	{
-		dprintf(STDERR_FILENO,
-		"Error: Can't close file descriptor %d\n", file_descriptor);
-		exit(100);
-	}
-}
-
-/**
-* main - copies the contents of one file into another file.
-* @argc: This shows the no. of arguments supplied to the program.
-* @argv: This shows array of pointers to the arguments.
-* Return: (0) when its successful.
-* Description: Exit with code 97, if the argument count is incorrect.
-*	Exit with code 98, if the source file cannot be read or does not exist.
-*	Exit with code 99, if the destination file cannot be written to or created.
-*	Exit with code 100, if either file cannot be closed.
-*/
-int main(int argc, char *argv[])
-{
-	int source_file, destination_file, read_result, write_result;
-	char *buffer;
-
-	if (argc != 3)
-	{
-		dprintf(STDERR_FILENO, "Usage: cp source_file destination_file\n");
+		dprintf(STDERR_FILENO, "Usage: cp file_from file_to\n");
 		exit(97);
 	}
 
-	buffer = create_buffer(argv[2]);
-	source_file = open(argv[1], O_RDONLY);
-	read_result = read(source_file, buffer, 1024);
-	destination_file = open(argv[2], O_CREAT | O_WRONLY | O_TRUNC, 0664);
+	file_descriptor_from = open(arguments[1], O_RDONLY);
 
-	do {
-		if (source_file == -1 || read_result == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", argv[1]);
-			free(buffer);
-			exit(98);
-		}
-		write_result = write(destination_file, buffer, read_result);
-
-		if (destination_file == -1 || write_result == -1)
-		{
-			dprintf(STDERR_FILENO, "Error: Can't write to %s\n", argv[2]);
-			free(buffer);
-			exit(99);
-		}
-		read_result = read(source_file, buffer, 1024);
-		destination_file = open(argv[2], O_WRONLY | O_APPEND);
+	if (file_descriptor_from < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", arguments[1]);
+		exit(98);
 	}
-		while (read_result > 0);
 
-		free(buffer);
-		close_file(source_file);
-		close_file(destination_file);
+	file_descriptor_to = open(arguments[2], O_WRONLY | O_CREAT | O_TRUNC, 00664);
 
-		return (0);
+	if (file_descriptor_to < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", arguments[2]);
+		exit(99);
+	}
+	while ((read_bytes = read(file_descriptor_from, buffer, 1024)) > 0)
+	{
+		written_bytes = write(file_descriptor_to, buffer, read_bytes);
+		write_error_check(written_bytes, arguments, file_descriptor_from);
+	}
+
+	read_error_check(read_bytes, arguments);
+	close_error_check(file_descriptor_from);
+	close_error_check(file_descriptor_to);
+
+	return (0);
+}
+
+/**
+* write_error_check - this helps to check write errors.
+* @written_bytes:this shows the  bytes written.
+* @arguments: this is the command line arguments.
+* @file_descriptor_from:this is the file descriptor for file to copy from.
+* Return: this returns void.
+*/
+void write_error_check(int written_bytes,
+	char *arguments[], int file_descriptor_from)
+{
+	if (written_bytes < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't write to %s\n", arguments[2]);
+		close_error_check(file_descriptor_from);
+		exit(99);
+	}
+}
+
+/**
+* read_error_check - helps to check read errors.
+* @read_bytes: helps to read bytes.
+* @arguments: shows the command line arguments
+* Return: returns void.
+*/
+void read_error_check(int read_bytes, char *arguments[])
+{
+	if (read_bytes < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't read from file %s\n", arguments[1]);
+		exit(98);
+	}
+}
+
+/**
+* close_error_check - helps with the close errors checks.
+* @file_descriptor: helps with file descriptor
+* Return: returns void.
+*/
+void close_error_check(int file_descriptor)
+{
+	if (close(file_descriptor) < 0)
+	{
+		dprintf(STDERR_FILENO, "Error: Can't close fd %d\n", file_descriptor);
+		exit(100);
+	}
 }
