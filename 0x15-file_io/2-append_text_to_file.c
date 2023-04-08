@@ -8,7 +8,7 @@
 *         returns(-1) when the user lacks permission & no file exist.
 *         returns(1) if it's successful.
 */
-int add_text_to_file(const char *filename_ptr, char *text_ptr)
+int append_text_to_file(const char *filename_ptr, char *text_ptr)
 {
 	int file_descriptor, write_count, length = 0;
 
